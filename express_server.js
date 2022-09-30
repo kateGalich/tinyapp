@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const PORT = 8080; 
+const PORT = 8080;
 const cookieParser = require('cookie-parser');
 
 app.set("view engine", "ejs");
@@ -106,8 +106,15 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
- 
+
   res.clearCookie('username');
   res.redirect('/urls');
+});
+
+app.get("/register", (req, res) => {
+  const templateVars = {
+    username: ''
+  };
+  res.render("urls_register", templateVars);
 });
 
