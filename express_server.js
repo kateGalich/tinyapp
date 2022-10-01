@@ -120,6 +120,13 @@ app.post("/urls/:id/edit", (req, res) => {
 });
 
 
+app.get("/login", (req, res) => {
+  const templateVars = {
+    user: null
+  };
+  res.render("login", templateVars);
+});
+
 app.post("/login", (req, res) => {
   const username = req.body.username;
   res.cookie('user_id', id);
@@ -158,10 +165,12 @@ app.post("/register", (req, res) => {
   }
 
   const id = generateRandomString();
-  users[id] = {};
-  users[id].id = id;
-  users[id].email = templateVars.email;
-  users[id].password = templateVars.password;
+  users[id] = {
+    id: id,
+    email: templateVars.email,
+    password: templateVars.password
+  };
+
   res.cookie('user_id', id);
   res.redirect('/urls');
 });
