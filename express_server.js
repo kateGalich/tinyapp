@@ -24,6 +24,17 @@ const users = {
   },
 };
 
+const findUser = function (email) {
+  for (let userKey in users) {
+    let user = users[userKey];
+    if (user.email === email) {
+
+      return user;
+    }
+  }
+  return null;
+};
+
 const generateRandomString = function () {
   let result = '';
   let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -135,6 +146,17 @@ app.post("/register", (req, res) => {
     email: req.body.email,
     password: req.body.password
   };
+  if (!templateVars.email || !templateVars.password) {
+    res.status(400);
+    res.send('Username and password can not be empty!');
+    return;
+  }
+
+  if (findUser(templateVars.email)) {
+    res.status(400);
+    res.send('This user already exists!');
+  }
+
   const id = generateRandomString();
   users[id] = {};
   users[id].id = id;
