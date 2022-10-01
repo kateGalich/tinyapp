@@ -45,6 +45,22 @@ const generateRandomString = function () {
   return result;
 };
 
+const ifUserLoggedin = (user, res, redirectUrl) => {
+  if (user) {
+    res.redirect(redirectUrl);
+    return true;
+  }
+  return false;
+};
+
+const renderError = function (req, res, message, statusCode=400) {
+  const templateVars = {
+    user: users[req.cookies.user_id],
+    message: message
+  };
+  res.status(statusCode);
+  res.render("error", templateVars);
+};
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -74,13 +90,23 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const templateVars = {
     user: users[req.cookies.user_id],
-
   };
-  res.render("urls_new", templateVars);
+  if (!templateVars.user) {
+    res.redirect('/login');
+  } else {
+    res.render("urls_new", templateVars);
+  }
 });
 
 
 app.post("/urls", (req, res) => {
+  const templateVars = {
+    user: users[req.cookies.user_id],
+  };
+  if (!templateVars.user) {
+    renderError(req, res, 'You must log in first');
+    return;
+  }
   const id = generateRandomString();
   urlDatabase[id] = req.body.longURL;
   res.redirect(`/urls/${id}`);
@@ -97,13 +123,15 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id];
+  if (!longURL) {
+    renderError(req, res, 'Url does not exists');
+    return;
+  }
   res.redirect(longURL);
 });
-
 
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
@@ -122,8 +150,11 @@ app.post("/urls/:id/edit", (req, res) => {
 
 app.get("/login", (req, res) => {
   const templateVars = {
-    user: null
+    user: users[req.cookies.user_id]
   };
+  if (ifUserLoggedin(templateVars.user, res, '/urls')) {
+    return;
+  }
   res.render("login", templateVars);
 });
 
@@ -137,12 +168,10 @@ app.post("/login", (req, res) => {
   const user = findUser(templateVars.email);
 
   if (!user) {
-    res.status(401);
-    res.send('Username and password not matched!');
+    renderError(req, res, 'Username and password not matched!', 401);
     return;
   } else if (templateVars.password !== user.password) {
-    res.status(401);
-    res.send('Username and password not matched!');
+    renderError(req, res, 'Username and password not matched!',401);
     return;
   }
 
@@ -158,8 +187,11 @@ app.post("/logout", (req, res) => {
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    user: null
+    user: users[req.cookies.user_id]
   };
+  if (ifUserLoggedin(templateVars.user, res, '/urls')) {
+    return;
+  }
   res.render("urls_register", templateVars);
 });
 
@@ -170,14 +202,13 @@ app.post("/register", (req, res) => {
     password: req.body.password
   };
   if (!templateVars.email || !templateVars.password) {
-    res.status(400);
-    res.send('Username and password can not be empty!');
+    renderError(req, res, 'Username and password can not be empty!');
     return;
   }
 
   if (findUser(templateVars.email)) {
-    res.status(400);
-    res.send('This user already exists!');
+    renderError(req, res, 'This user already exists!');
+    return;
   }
 
   const id = generateRandomString();
