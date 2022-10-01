@@ -8,8 +8,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
 };
 const users = {
   userRandomID: {
@@ -53,7 +59,7 @@ const ifUserLoggedin = (user, res, redirectUrl) => {
   return false;
 };
 
-const renderError = function (req, res, message, statusCode=400) {
+const renderError = function (req, res, message, statusCode = 400) {
   const templateVars = {
     user: users[req.cookies.user_id],
     message: message
@@ -108,16 +114,18 @@ app.post("/urls", (req, res) => {
     return;
   }
   const id = generateRandomString();
-  urlDatabase[id] = req.body.longURL;
+  urlDatabase[id] = {
+    longURL: req.body.longURL,
+    userID: templateVars.user.id
+  };
   res.redirect(`/urls/${id}`);
-
 });
 
 
 app.get("/urls/:id", (req, res) => {
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id],
+    longURL: urlDatabase[req.params.id].longURL,
     user: users[req.cookies.user_id],
   };
   res.render("urls_show", templateVars);
@@ -125,7 +133,7 @@ app.get("/urls/:id", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
-  const longURL = urlDatabase[id];
+  const longURL = urlDatabase[id].longURL;
   if (!longURL) {
     renderError(req, res, 'Url does not exists');
     return;
@@ -140,10 +148,10 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 
-app.post("/urls/:id/edit", (req, res) => {
+app.post("/urls/:id/edit", (req, res) => { 
   const id = req.params.id;
 
-  urlDatabase[id] = req.body.longURL;
+  urlDatabase[id].longURL = req.body.longURL;
   res.redirect('/urls');
 });
 
@@ -171,7 +179,7 @@ app.post("/login", (req, res) => {
     renderError(req, res, 'Username and password not matched!', 401);
     return;
   } else if (templateVars.password !== user.password) {
-    renderError(req, res, 'Username and password not matched!',401);
+    renderError(req, res, 'Username and password not matched!', 401);
     return;
   }
 
