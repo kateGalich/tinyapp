@@ -11,6 +11,18 @@ const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
 
 const generateRandomString = function () {
   let result = '';
@@ -21,7 +33,6 @@ const generateRandomString = function () {
   }
   return result;
 };
-
 
 
 app.get("/", (req, res) => {
@@ -42,16 +53,17 @@ app.get("/hello", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const templateVars = {
+    user: users[req.cookies.user_id],
     urls: urlDatabase,
-    username: req.cookies.username
   };
-  res.render("urls_index", templateVars);
 
+  res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    username: req.cookies.username
+    user: users[req.cookies.user_id],
+
   };
   res.render("urls_new", templateVars);
 });
@@ -69,7 +81,7 @@ app.get("/urls/:id", (req, res) => {
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
-    username: req.cookies["username"]
+    user: users[req.cookies.user_id],
   };
   res.render("urls_show", templateVars);
 });
@@ -99,22 +111,35 @@ app.post("/urls/:id/edit", (req, res) => {
 
 app.post("/login", (req, res) => {
   const username = req.body.username;
-  res.cookie('username', username);
+  res.cookie('user_id', id);
   res.redirect('/urls');
-
 
 });
 
 app.post("/logout", (req, res) => {
-
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect('/urls');
 });
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    username: ''
+    user: null
   };
   res.render("urls_register", templateVars);
 });
 
+
+app.post("/register", (req, res) => {
+  const templateVars = {
+    username: req.body.email,
+    email: req.body.email,
+    password: req.body.password
+  };
+  const id = generateRandomString();
+  users[id] = {};
+  users[id].id = id;
+  users[id].email = templateVars.email;
+  users[id].password = templateVars.password;
+  res.cookie('user_id', id);
+  res.redirect('/urls');
+});
