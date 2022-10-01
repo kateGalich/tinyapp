@@ -128,16 +128,33 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie('user_id', id);
-  res.redirect('/urls');
+  const templateVars = {
+    user: null,
+    email: req.body.email,
+    password: req.body.password
+  };
 
+  const user = findUser(templateVars.email);
+
+  if (!user) {
+    res.status(401);
+    res.send('Username and password not matched!');
+    return;
+  } else if (templateVars.password !== user.password) {
+    res.status(401);
+    res.send('Username and password not matched!');
+    return;
+  }
+
+  res.cookie('user_id', user.id);
+  res.redirect('/urls');
 });
 
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
   res.redirect('/urls');
 });
+
 
 app.get("/register", (req, res) => {
   const templateVars = {
@@ -146,10 +163,9 @@ app.get("/register", (req, res) => {
   res.render("urls_register", templateVars);
 });
 
-
 app.post("/register", (req, res) => {
   const templateVars = {
-    username: req.body.email,
+    user: null,
     email: req.body.email,
     password: req.body.password
   };
