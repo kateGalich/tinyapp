@@ -28,6 +28,11 @@ const users = {
     email: "user2@example.com",
     password: "dishwasher-funk",
   },
+  aJ48lW: {
+    id: "aJ48lW",
+    email: "kate@kate.com",
+    password: "123",
+  },
 };
 
 const findUser = function (email) {
@@ -68,6 +73,21 @@ const renderError = function (req, res, message, statusCode = 400) {
   res.render("error", templateVars);
 };
 
+// this function takes a userId as a parameter and then gets all the urls
+// from the urlDatabase
+const urlsForUser = function (userId) {
+  //for in loop to go through the UrlsDatabase
+  let urlsResult = {};
+  for (let key in urlDatabase) { //IN is always for Objects and keys | of is for Arrays
+    if (urlDatabase[key].userID === userId) {
+      urlsResult[key] = {
+        shortURL: key, longURL: urlDatabase[key].longURL, userID: userId
+      };
+    }
+  }
+  return urlsResult;
+};
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -85,11 +105,11 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  let result = urlsForUser(req.cookies.user_id);
   const templateVars = {
     user: users[req.cookies.user_id],
-    urls: urlDatabase,
+    urls: result,
   };
-
   res.render("urls_index", templateVars);
 });
 
@@ -103,7 +123,6 @@ app.get("/urls/new", (req, res) => {
     res.render("urls_new", templateVars);
   }
 });
-
 
 app.post("/urls", (req, res) => {
   const templateVars = {
@@ -121,13 +140,21 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${id}`);
 });
 
-
 app.get("/urls/:id", (req, res) => {
+  const id = req.params.id;
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id].longURL,
+    longURL: urlDatabase[id].longURL,
     user: users[req.cookies.user_id],
   };
+  if (!templateVars.user) {
+    renderError(req, res, 'You must log in first');
+    return;
+  } else if (templateVars.user.id !== urlDatabase[id].userID) {
+    renderError(req, res, 'Access is denied');
+    return;
+  }
+
   res.render("urls_show", templateVars);
 });
 
@@ -143,18 +170,26 @@ app.get("/u/:id", (req, res) => {
 
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
+  const user = users[req.cookies.user_id];
+  if (!user || user.id !== urlDatabase[id].userID) {
+    renderError(req, res, 'Access is denied');
+    return;
+  }
   delete urlDatabase[id];
   res.redirect('/urls');
 });
 
-
-app.post("/urls/:id/edit", (req, res) => { 
+app.post("/urls/:id/edit", (req, res) => {
+  const user = users[req.cookies.user_id];
   const id = req.params.id;
-
   urlDatabase[id].longURL = req.body.longURL;
+  if (user.id !== urlDatabase[id].userID) {
+    renderError(req, res, 'Access is denied');
+    return;
+  }
+
   res.redirect('/urls');
 });
-
 
 app.get("/login", (req, res) => {
   const templateVars = {
