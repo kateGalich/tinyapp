@@ -3,7 +3,6 @@ const app = express();
 const PORT = 8080;
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
-
 const {getUserByEmail} = require('./helpers');
 
 app.set("view engine", "ejs");
@@ -12,7 +11,7 @@ app.use(cookieSession({
   name: 'session',
   keys: ['loop'],
   maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  }));
+}));
 
 const urlDatabase = {
   b6UTxQ: {
@@ -42,10 +41,11 @@ const users = {
   },
 };
 
-const generateRandomString = function () {
+//Generating id for the url and the user DBs
+const generateRandomString = function() {
   let result = '';
   let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (var i = 0; i < 6; i++) {
+  for (let i = 0; i < 6; i++) {
     result += characters.charAt(Math.floor(Math.random() *
       characters.length));
   }
@@ -60,7 +60,7 @@ const ifUserLoggedin = (user, res, redirectUrl) => {
   return false;
 };
 
-const renderError = function (req, res, message, statusCode = 400) {
+const renderError = function(req, res, message, statusCode = 400) {
   const templateVars = {
     user: users[req.session.user_id],
     message: message
@@ -69,11 +69,10 @@ const renderError = function (req, res, message, statusCode = 400) {
   res.render("error", templateVars);
 };
 
-// this function takes a userId as a parameter and then gets all the urls
-// from the urlDatabase
-const urlsForUser = function (userId) {
-
+// Getting all the urls from the urlDB by userId
+const urlsForUser = function(userId) {
   let urlsResult = {};
+
   for (let key in urlDatabase) {
     if (urlDatabase[key].userID === userId) {
       urlsResult[key] = {
@@ -83,6 +82,7 @@ const urlsForUser = function (userId) {
   }
   return urlsResult;
 };
+
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -218,8 +218,7 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  //res.clearCookie('user_id');
-  delete res.session.user_id;
+  req.session = null;
   res.redirect('/urls');
 });
 
