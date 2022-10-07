@@ -1,11 +1,18 @@
 const express = require("express");
 const app = express();
 const PORT = 8080;
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
+const bcrypt = require("bcryptjs");
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['loop'],
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}));
 
 const urlDatabase = {
   b6UTxQ: {
@@ -66,7 +73,7 @@ const ifUserLoggedin = (user, res, redirectUrl) => {
 
 const renderError = function (req, res, message, statusCode = 400) {
   const templateVars = {
-    user: users[req.cookies.user_id],
+    user: users[req.session.user_id],
     message: message
   };
   res.status(statusCode);
@@ -105,9 +112,9 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  let result = urlsForUser(req.cookies.user_id);
+  let result = urlsForUser(req.session.user_id);
   const templateVars = {
-    user: users[req.cookies.user_id],
+    user: users[req.session.user_id],
     urls: result,
   };
   res.render("urls_index", templateVars);
@@ -115,7 +122,7 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    user: users[req.cookies.user_id],
+    user: users[req.session.user_id],
   };
   if (!templateVars.user) {
     res.redirect('/login');
@@ -126,7 +133,7 @@ app.get("/urls/new", (req, res) => {
 
 app.post("/urls", (req, res) => {
   const templateVars = {
-    user: users[req.cookies.user_id],
+    user: users[req.session.user_id],
   };
   if (!templateVars.user) {
     renderError(req, res, 'You must log in first');
@@ -145,7 +152,7 @@ app.get("/urls/:id", (req, res) => {
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[id].longURL,
-    user: users[req.cookies.user_id],
+    user: users[req.session.user_id],
   };
   if (!templateVars.user) {
     renderError(req, res, 'You must log in first');
@@ -170,7 +177,7 @@ app.get("/u/:id", (req, res) => {
 
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.user_id];
   if (!user || user.id !== urlDatabase[id].userID) {
     renderError(req, res, 'Access is denied');
     return;
@@ -180,7 +187,7 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/urls/:id/edit", (req, res) => {
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.user_id];
   const id = req.params.id;
   urlDatabase[id].longURL = req.body.longURL;
   if (user.id !== urlDatabase[id].userID) {
@@ -193,7 +200,7 @@ app.post("/urls/:id/edit", (req, res) => {
 
 app.get("/login", (req, res) => {
   const templateVars = {
-    user: users[req.cookies.user_id]
+    user: users[req.session.user_id]
   };
   if (ifUserLoggedin(templateVars.user, res, '/urls')) {
     return;
@@ -213,24 +220,26 @@ app.post("/login", (req, res) => {
   if (!user) {
     renderError(req, res, 'Username and password not matched!', 401);
     return;
-  } else if (templateVars.password !== user.password) {
+  } else if (!bcrypt.compareSync(templateVars.password, user.password)) {
     renderError(req, res, 'Username and password not matched!', 401);
     return;
   }
 
-  res.cookie('user_id', user.id);
+  //res.cookie('user_id', user.id);
+  req.session.user_id = user.id;
   res.redirect('/urls');
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
+  //res.clearCookie('user_id');
+  delete res.session.user_id;
   res.redirect('/urls');
 });
 
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    user: users[req.cookies.user_id]
+    user: users[req.session.user_id]
   };
   if (ifUserLoggedin(templateVars.user, res, '/urls')) {
     return;
@@ -242,7 +251,7 @@ app.post("/register", (req, res) => {
   const templateVars = {
     user: null,
     email: req.body.email,
-    password: req.body.password
+    password: bcrypt.hashSync(req.body.password, 10)
   };
   if (!templateVars.email || !templateVars.password) {
     renderError(req, res, 'Username and password can not be empty!');
@@ -261,6 +270,6 @@ app.post("/register", (req, res) => {
     password: templateVars.password
   };
 
-  res.cookie('user_id', id);
+  req.session.user_id = id;
   res.redirect('/urls');
 });
