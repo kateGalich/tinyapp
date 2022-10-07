@@ -4,15 +4,15 @@ const PORT = 8080;
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
 
+const {getUserByEmail} = require('./helpers');
+
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
   name: 'session',
   keys: ['loop'],
-
-  // Cookie Options
-  maxAge: 24 * 60 * 60 * 1000 // 24 hours
-}));
+  maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  }));
 
 const urlDatabase = {
   b6UTxQ: {
@@ -40,17 +40,6 @@ const users = {
     email: "kate@kate.com",
     password: "123",
   },
-};
-
-const findUser = function (email) {
-  for (let userKey in users) {
-    let user = users[userKey];
-    if (user.email === email) {
-
-      return user;
-    }
-  }
-  return null;
 };
 
 const generateRandomString = function () {
@@ -83,9 +72,9 @@ const renderError = function (req, res, message, statusCode = 400) {
 // this function takes a userId as a parameter and then gets all the urls
 // from the urlDatabase
 const urlsForUser = function (userId) {
-  //for in loop to go through the UrlsDatabase
+
   let urlsResult = {};
-  for (let key in urlDatabase) { //IN is always for Objects and keys | of is for Arrays
+  for (let key in urlDatabase) {
     if (urlDatabase[key].userID === userId) {
       urlsResult[key] = {
         shortURL: key, longURL: urlDatabase[key].longURL, userID: userId
@@ -215,7 +204,7 @@ app.post("/login", (req, res) => {
     password: req.body.password
   };
 
-  const user = findUser(templateVars.email);
+  const user = getUserByEmail(templateVars.email, users);
 
   if (!user) {
     renderError(req, res, 'Username and password not matched!', 401);
@@ -224,8 +213,6 @@ app.post("/login", (req, res) => {
     renderError(req, res, 'Username and password not matched!', 401);
     return;
   }
-
-  //res.cookie('user_id', user.id);
   req.session.user_id = user.id;
   res.redirect('/urls');
 });
@@ -235,7 +222,6 @@ app.post("/logout", (req, res) => {
   delete res.session.user_id;
   res.redirect('/urls');
 });
-
 
 app.get("/register", (req, res) => {
   const templateVars = {
@@ -258,7 +244,7 @@ app.post("/register", (req, res) => {
     return;
   }
 
-  if (findUser(templateVars.email)) {
+  if (getUserByEmail(templateVars.email, users)) {
     renderError(req, res, 'This user already exists!');
     return;
   }
