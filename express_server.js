@@ -83,27 +83,24 @@ const urlsForUser = function(userId) {
   return urlsResult;
 };
 
+const getCurrentUser = function(req) {
+  const user = users[req.session.user_id];
+  return user;
+};
 
 app.get("/", (req, res) => {
-  const user = users[req.session.user_id];
-
+  const user = getCurrentUser(req);
   res.redirect(user ? '/urls' : '/login');
 });
-
-
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
 app.get("/urls", (req, res) => {
   let result = urlsForUser(req.session.user_id);
   const templateVars = {
-    user: users[req.session.user_id],
+    user: getCurrentUser(req),
     urls: result,
   };
   res.render("urls_index", templateVars);
@@ -111,7 +108,7 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    user: users[req.session.user_id],
+    user: getCurrentUser(req),
   };
   if (!templateVars.user) {
     res.redirect('/login');
@@ -122,7 +119,7 @@ app.get("/urls/new", (req, res) => {
 
 app.post("/urls", (req, res) => {
   const templateVars = {
-    user: users[req.session.user_id],
+    user: getCurrentUser(req),
   };
   if (!templateVars.user) {
     renderError(req, res, 'You must log in first');
@@ -141,7 +138,7 @@ app.get("/urls/:id", (req, res) => {
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[id].longURL,
-    user: users[req.session.user_id],
+    user: getCurrentUser(req),
   };
   if (!templateVars.user) {
     renderError(req, res, 'You must log in first');
@@ -166,7 +163,7 @@ app.get("/u/:id", (req, res) => {
 
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
-  const user = users[req.session.user_id];
+  const user = getCurrentUser(req);
   if (!user || user.id !== urlDatabase[id].userID) {
     renderError(req, res, 'Access is denied');
     return;
@@ -176,7 +173,7 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/urls/:id/edit", (req, res) => {
-  const user = users[req.session.user_id];
+  const user = getCurrentUser(req);
   const id = req.params.id;
 
   if (user.id !== urlDatabase[id].userID) {
@@ -191,7 +188,7 @@ app.post("/urls/:id/edit", (req, res) => {
 
 app.get("/login", (req, res) => {
   const templateVars = {
-    user: users[req.session.user_id]
+    user: getCurrentUser(req)
   };
   if (ifUserLoggedin(templateVars.user, res, '/urls')) {
     return;
@@ -226,7 +223,7 @@ app.post("/logout", (req, res) => {
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    user: users[req.session.user_id]
+    user: getCurrentUser(req)
   };
   if (ifUserLoggedin(templateVars.user, res, '/urls')) {
     return;
