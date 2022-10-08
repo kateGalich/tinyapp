@@ -4,6 +4,7 @@ const PORT = 8080;
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
 const { getUserByEmail } = require('./helpers');
+const { users } = require('./users');
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
@@ -23,23 +24,7 @@ const urlDatabase = {
     userID: "aJ48lW",
   },
 };
-const users = {
-  userRandomID: {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur",
-  },
-  user2RandomID: {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk",
-  },
-  aJ48lW: {
-    id: "aJ48lW",
-    email: "kate@kate.com",
-    password: "123",
-  }
-};
+
 
 //Generating id for the url and the user DBs
 const generateRandomString = function() {
