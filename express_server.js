@@ -3,7 +3,7 @@ const app = express();
 const PORT = 8080;
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
-const {getUserByEmail} = require('./helpers');
+const { getUserByEmail } = require('./helpers');
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
@@ -38,7 +38,7 @@ const users = {
     id: "aJ48lW",
     email: "kate@kate.com",
     password: "123",
-  },
+  }
 };
 
 //Generating id for the url and the user DBs
@@ -85,12 +85,12 @@ const urlsForUser = function(userId) {
 
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  const user = users[req.session.user_id];
+
+  res.redirect(user ? '/urls' : '/login');
 });
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
+
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
@@ -178,11 +178,13 @@ app.post("/urls/:id/delete", (req, res) => {
 app.post("/urls/:id/edit", (req, res) => {
   const user = users[req.session.user_id];
   const id = req.params.id;
-  urlDatabase[id].longURL = req.body.longURL;
+
   if (user.id !== urlDatabase[id].userID) {
     renderError(req, res, 'Access is denied');
     return;
   }
+
+  urlDatabase[id].longURL = req.body.longURL;
 
   res.redirect('/urls');
 });
@@ -257,4 +259,8 @@ app.post("/register", (req, res) => {
 
   req.session.user_id = id;
   res.redirect('/urls');
+});
+
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
 });
