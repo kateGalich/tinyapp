@@ -5,6 +5,7 @@ const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
 const { generateRandomString, ifUserLoggedin } = require('./helpers');
 const { users, getCurrentUser, getUserByEmail } = require('./users');
+const {urlsForUser, urlDatabase} = require('./urls');
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
@@ -14,17 +15,8 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000, // 24 hours
 }));
 
-const urlDatabase = {
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "aJ48lW",
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "aJ48lW",
-  },
-};
 
+//Show error page to user
 const renderError = function(req, res, message, statusCode = 400) {
   const templateVars = {
     user: getCurrentUser(req),
@@ -33,21 +25,6 @@ const renderError = function(req, res, message, statusCode = 400) {
   res.status(statusCode);
   res.render("error", templateVars);
 };
-
-// Getting all the urls from the urlDB by userId
-const urlsForUser = function(userId) {
-  let urlsResult = {};
-
-  for (let key in urlDatabase) {
-    if (urlDatabase[key].userID === userId) {
-      urlsResult[key] = {
-        shortURL: key, longURL: urlDatabase[key].longURL, userID: userId
-      };
-    }
-  }
-  return urlsResult;
-};
-
 
 app.get("/", (req, res) => {
   const user = getCurrentUser(req);
