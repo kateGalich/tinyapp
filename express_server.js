@@ -5,7 +5,7 @@ const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
 const { generateRandomString, ifUserLoggedin } = require('./helpers');
 const { users, getCurrentUser, getUserByEmail } = require('./users');
-const {urlsForUser, urlDatabase} = require('./urls');
+const { urlsForUser, urlDatabase, addUrl } = require('./urls');
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
@@ -14,7 +14,6 @@ app.use(cookieSession({
   keys: ['loop'],
   maxAge: 24 * 60 * 60 * 1000, // 24 hours
 }));
-
 
 //Show error page to user
 const renderError = function(req, res, message, statusCode = 400) {
@@ -63,11 +62,8 @@ app.post("/urls", (req, res) => {
     renderError(req, res, 'You must log in first');
     return;
   }
-  const id = generateRandomString();
-  urlDatabase[id] = {
-    longURL: req.body.longURL,
-    userID: templateVars.user.id
-  };
+
+  const id = addUrl(req.body.longURL, templateVars.user.id);
   res.redirect(`/urls/${id}`);
 });
 

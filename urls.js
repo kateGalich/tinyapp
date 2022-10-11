@@ -1,3 +1,4 @@
+const { generateRandomString } = require('./helpers');
 
 const urlDatabase = {
   b6UTxQ: {
@@ -24,4 +25,12 @@ const urlsForUser = function(userId) {
   return urlsResult;
 };
 
-module.exports = {urlsForUser, urlDatabase};
+const addUrl = function(longURL, userID) {
+  const id = generateRandomString();
+  urlDatabase[id] = {
+    longURL, userID
+  };
+  return id;
+};
+
+module.exports = { urlsForUser, urlDatabase, addUrl };
