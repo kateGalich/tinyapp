@@ -3,8 +3,8 @@ const app = express();
 const PORT = 8080;
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
-const { getUserByEmail } = require('./helpers');
-const { users } = require('./users');
+//const { getUserByEmail } = require('./helpers');
+const { users, getCurrentUser, getUserByEmail } = require('./users');
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
@@ -47,7 +47,7 @@ const ifUserLoggedin = (user, res, redirectUrl) => {
 
 const renderError = function(req, res, message, statusCode = 400) {
   const templateVars = {
-    user: users[req.session.user_id],
+    user: getCurrentUser(req),
     message: message
   };
   res.status(statusCode);
@@ -68,10 +68,6 @@ const urlsForUser = function(userId) {
   return urlsResult;
 };
 
-const getCurrentUser = function(req) {
-  const user = users[req.session.user_id];
-  return user;
-};
 
 app.get("/", (req, res) => {
   const user = getCurrentUser(req);
