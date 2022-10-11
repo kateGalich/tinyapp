@@ -15,7 +15,7 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000, // 24 hours
 }));
 
-//Show error page to user
+// Show error page to user
 const renderError = function(req, res, message, statusCode = 400) {
   const templateVars = {
     user: getCurrentUser(req),
@@ -25,24 +25,31 @@ const renderError = function(req, res, message, statusCode = 400) {
   res.render("error", templateVars);
 };
 
+// get home page
 app.get("/", (req, res) => {
   const user = getCurrentUser(req);
   res.redirect(user ? '/urls' : '/login');
 });
 
+// endpoint for debugging
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+// get list of users urls
 app.get("/urls", (req, res) => {
   let result = urlsForUser(req.session.user_id);
   const templateVars = {
     user: getCurrentUser(req),
     urls: result,
   };
+  if (!templateVars.user) {
+    renderError(req, res, 'You must log in first');
+  }
   res.render("urls_index", templateVars);
 });
 
+// get create url page
 app.get("/urls/new", (req, res) => {
   const templateVars = {
     user: getCurrentUser(req),
@@ -54,6 +61,7 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
+// create new url
 app.post("/urls", (req, res) => {
   const templateVars = {
     user: getCurrentUser(req),
@@ -67,6 +75,7 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${id}`);
 });
 
+// view one url
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
   const templateVars = {
@@ -85,6 +94,7 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+// redirect short url to long
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id].longURL;
@@ -95,6 +105,7 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
+// delete url
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
   const user = getCurrentUser(req);
@@ -106,6 +117,7 @@ app.post("/urls/:id/delete", (req, res) => {
   res.redirect('/urls');
 });
 
+// edit url
 app.post("/urls/:id/edit", (req, res) => {
   const user = getCurrentUser(req);
   const id = req.params.id;
